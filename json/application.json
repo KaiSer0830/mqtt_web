@@ -1,0 +1,10 @@
+application_config({
+	"server": '121.40.101.210',
+	"port": 1884,
+	"topic": '#',
+	"child_topic": 'kaiser',
+	"username": 'zhang',
+	"password": '123',
+	"useTLS": false,
+	"cleanSession": true
+})

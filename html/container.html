@@ -1,0 +1,106 @@
+
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<title>Mosquitto Websockets</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<script src="../js/mqttws31.js" type="text/javascript"></script>
+		<script src="../js/jquery.min.js" type="text/javascript"></script>
+		<script src="../js/mosquitto.js" type="text/javascript"></script>
+		<script src="../js/function.js" type="text/javascript"></script>
+		<script type="text/javascript">
+			setInterval("datetime()",1000);
+			function application_config(result){
+				//回调函数名称(indexDemo)，需要与 src 中一致，而且要与文件地址中名一致。jsonp格式名称({})
+				host = result.server;		//变量定义在mosquitto.js里面
+				port = result.port;
+				topic = result.topic;
+				username = result.username;
+				password = result.password;
+				useTLS = result.useTLS;
+				cleansession = result.cleanSession;
+				// console.log(result);     //打印 indexDemo.json 中的数据
+			}
+			
+			$(document).ready(function() {
+				MQTTconnect();
+				container_main_init();
+			});
+		</script>
+    </head>
+	<link rel="stylesheet" type="text/css" href="../css/style.css">
+	<script type="text/javascript" src="../json/application.json?callback=application_config"></script>
+	<body class="body_style">
+		<div class="mosquitto">
+			<img src="../img/goback.png" class="goback_img" onclick="goBack_one()"/>
+			<img src="../img/team_logo.png" class="team_logo" onclick="goBack_one()"/>
+			<h1 class="title">Mosquitto Websockets</h1>
+			<img src="../img/circle_red.png" id="circle_index" style="width: 20px; height: 20px; position: absolute; left: 1215px;"/>
+			<div id="time" class="time">time</div>
+			<!-- <div>
+				<div class="sub">
+					<span>Subscribed Topic:</span>
+					<input type='text' id='topic' disabled class="sub_input"/> 
+					Status: <input type='text' id='status' size="80" disabled class="connect_info"/>
+				</div>
+				<div class="rec">
+					Received Topic: <input type='text' id='receivedtopic' class="rec_topic" disabled /> 
+					Content: <input type='text' id='receivedtext' size="80" class="rec_text" disabled />
+				</div>
+				<div class="pub">
+					Publish Topic: <input type='text' id='sendtopic' class="pub_topic"/> 
+					Content: <input type='text' id='textsend' size="80" class="pub_text"/>
+					<button id="btn" onclick="button_onclick()" class="send_btn">Send</button>
+				</div>
+			</div> -->
+			<span class="image_title">镜像列表:</span>
+			<div class="image_frame" id="image_frame"></div>
+			<span class="create_title">创建容器:</span>
+			<div class="create_container_frame">
+				<div style="display: flex; flex-direction: row;">
+					<span>容器名称:</span>
+					<input class="create_input1" size="20" placeholder="容器名称" id="create_container_name" value="bird"/>
+				</div>
+				<div style="display: flex; flex-direction: row;">
+					<span>容器镜像:</span>
+					<input class="create_input1" size="20" placeholder="容器镜像" id="create_image_name" value="ubuntu"/>
+				</div>
+				<div style="display: flex; flex-direction: row;">
+					<span>容器指令:</span>
+					<input class="create_input1" size="20" placeholder="容器指令" id="create_order" value="top -b"/>
+				</div>
+				<div style="display: flex; flex-direction: row;">
+					<span>内存限制:</span>
+					<input class="create_input1" size="20" placeholder="单位:m" id="create_storage_limit" value="128m"/>
+				</div>
+				<div style="display: flex; flex-direction: row;">
+					<span>CPU核心数:</span>
+					<input class="create_input2" size="20" placeholder="CPU核心数" id="create_cpu_core" value="1"/>
+				</div>
+				<div style="display: flex; flex-direction: row;">
+					<span>CPU时间片:</span>
+					<input class="create_input2" size="20" placeholder="1-1024" id="create_time_splice" value="520"/>
+				</div>
+				<div style="display: flex; flex-direction: row;">
+					<span>端口映射:</span>
+					<input class="create_input3" size="10" placeholder="宿主机端口" id="create_port1" value="1080"/>
+					<span style="color: white; margin-left: 5px;">——</span>
+					<input class="create_input3" size="10" placeholder="容器端口" id="create_port2" value="1080"/>
+				</div>
+			</div>
+			<span class="container_title" id="container_title"></span>
+			<div class="container_frame" id="container_frame"></div>
+			<span class="log_title">日志输出:</span>
+			<div class="log_frame" id="log_frame"></div>
+			<div class="end_btn">
+				<button class="btn" onclick="add_container()">创建容器</button>
+				<button class="btn" onclick="delete_container()">删除容器</button>
+				<button class="btn" onclick="delete_container()">停止容器</button>
+				<button class="btn" onclick="delete_container()">打包容器</button>
+				<button class="btn" onclick="container_clear()">容器重置</button>
+				<!-- <button class="add_btn" onclick="test()">测试</button> -->
+			</div>
+		</div>
+    </body>
+</html>
