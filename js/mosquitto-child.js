@@ -38,82 +38,97 @@ function MQTTconnect() {
 
 function onConnect() {
 	$('#circle_index').attr('src','../img/circle_green.png');
-	$('#childstatus').val('Connected to ' + host + ':' + port);
 	// Connection succeeded; subscribe to our topic
 	// mqtt.subscribe('sys/'+child_topic+'/msg/data', {qos: 0});
 	mqtt.subscribe('#', {qos: 0});
-	$('#childtopic').val('sys/'+child_topic+'/msg/data');
-	$('#childsendtopic').val('sys/'+child_topic+'/msg/order');
 }
 
 function onConnectionLost(response) {
 	$('#circle_index').attr('src','../img/circle_red.png');
 	setTimeout(MQTTconnect, reconnectTimeout);
-	$('#childstatus').val("connection lost: " + response.errorMessage + ". Reconnecting");
 };
 
 function onMessageArrived(message) {		//接收信息函数
 	var topic = message.destinationName;
 	var message = message.payloadString;
 	
+	var container_list = storage.getItem("container_list");
+	var image_list = storage.getItem("image_list");
+	var current_gateway = storage.getItem('current_gateway');
+	var current_container = storage.getItem('current_container');
+
 	var container_exist = false;
-	var container_exist_arrayNum = 0;
+	var container_exist_arrayNum = null;
 	var container_exist_id = null;
 	var container_status = 'offline';
-	for(var i = 0; i < container_list.length; i++) {		//获取在线离线状态与获取任意容器上线信息
-		// if(child_topic == container_list[i].container_name) {
-		// 	container_status = container_list[i].container_status;
-		// }
-		if((topic == ('sys/' + container_list[i].container_name + '/msg/data')) || (topic == ('sys/' + container_list[i].container_name + '/status/online'))) {
-			container_exist = true;
-			container_exist_arrayNum = i;
-			container_exist_id = container_list[i].container_name_id;
+	var containerIsCurrent = false;
+	
+	var arr = topic.split('/');
+	
+	if(arr[0] == 'sys' && arr[1] == current_gateway) {
+		for(var i = 0; i < container_list.length; i++) {		//获取在线离线状态与获取任意容器上线信息
+			if(arr[2]  == container_list[i]) {
+				container_exist = true;
+				container_exist_arrayNum = i;
+				container_exist_id = container_list[i].container_name_id;
+				if(arr[2] == current_container) {
+					containerIsCurrent = true;
+				}
+			}
+		}
+	}
+	
+	if(arr[3] == 'msg') {
+		if(arr[2] == current_container) {
+			storage.setItem("query_log", message);
 		}
 	}
 	
 	//上线离线功能显示
-	if(container_exist == true && topic == ('sys/' + container_list[container_exist_arrayNum].container_name + '/status/online') && message == 'online'){		//当收到上线指令时
+	if(container_exist == true && arr[0] == 'sys' && arr[3] == "online" && message == "online"){    //当收到上线指令时
 		$("#" + container_exist_id).attr('class','container_name_online');
 		container_list[container_exist_arrayNum].container_status = 'online';
 		container_list[container_exist_arrayNum].received_message.push(topic + "@" + message);
 		localStorage.setItem("container_list", JSON.stringify(container_list));
 		
-		document.getElementById('childonline_img').src="../img/online.png";
-		$('#childonline_w').css('color', 'green');
-		$('#childonline_w').html("在线");
-		$('#childreceive').prepend('<li>' + 'Topic: ' + topic + '=====>>>>>' + 'Message: ' + message+ '</li>');
+		if(containerIsCurrent) {
+			document.getElementById('childonline_img').src="../img/online.png";
+			$('#childonline_w').css('color', 'green');
+			$('#childonline_w').html("在线");
+			$('#childreceive').prepend('<li>' + 'Topic: ' + topic + '=====>>>>>' + 'Message: ' + message+ '</li>');
+		}
 	}
-	else if(container_exist == true && topic == ('sys/' + container_list[container_exist_arrayNum].container_name + '/status/online') && message == 'offline'){		//当收到下线指令时
+	
+	else if(container_exist == true && arr[0] == 'sys' && arr[3] == "online"  && message == "offline"){   //当收到下线指令时
 		$("#" + container_exist_id).attr('class','container_name');
 		container_list[container_exist_arrayNum].container_status = 'offline';
 		container_list[container_exist_arrayNum].send_message = [];
 		container_list[container_exist_arrayNum].received_message = [];
 		localStorage.setItem("container_list", JSON.stringify(container_list));
 		
-		document.getElementById('childonline_img').src="../img/offline.png";
-		$('#childonline_w').css('color', 'red');
-		$('#childonline_w').html("离线");
-		$('#childsend').empty();
-		$('#childreceive').empty();
+		if(containerIsCurrent) {
+			document.getElementById('childonline_img').src="../img/offline.png";
+			$('#childonline_w').css('color', 'red');
+			$('#childonline_w').html("离线");
+			$('#childsend').empty();
+			$('#childreceive').empty();
+		}
 	}
 	
 	//非上线离线消息存储
-	if(container_exist = true && container_list[container_exist_arrayNum].container_status == 'online') {
-		if(topic == ('sys/' + child_topic + '/msg/data')) {
-			if(message != 'online' && message != 'offline') {
+	if(container_exist == true && container_list[container_exist_arrayNum].container_status == "online") {
+		
+		if(arr[0] == 'sys/' && arr[1] == current_gateway && arr[3] == '/msg/data') {
+			if(message != 'online' && message != 'offline' && containerIsCurrent) {
 				$('#childreceive').prepend('<li>' + 'Topic: ' + topic + '=====>>>>>' + 'Message: ' + message+ '</li>');
 				container_list[container_exist_arrayNum].received_message.push(topic + "@" + message);
-				localStorage.setItem("container_list", JSON.stringify(container_list));
 			}
-		}
-		else if(topic == ('sys/' + container_list[container_exist_arrayNum].container_name + '/msg/data')){
-			if(message != 'online' && message != 'offline') {
+			else if(message != 'online' && message != 'offline' && !containerIsCurrent) {
 				container_list[container_exist_arrayNum].received_message.push(topic + "@" + message);
-				localStorage.setItem("container_list", JSON.stringify(container_list));
 			}
 		}
-
 	}
+	localStorage.setItem("container_list", JSON.stringify(container_list));
 };
 
 function button_onclick() {
