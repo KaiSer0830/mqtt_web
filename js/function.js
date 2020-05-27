@@ -35,7 +35,7 @@ function skip_one(arg) {
 }
 
 function skip_two(arg) {
-	var name = $(arg).parent().attr('id').replace("_id", "");
+	var name = $(arg).parent().attr('id').replace("_ctn_id", "");
 	storage.setItem("current_container", name);
 	window.location.replace("./child.html");
 }
@@ -102,32 +102,6 @@ function gateway_init() {
 function container_main_init() {
 	$('#log_frame').empty();
 	$('#log_frame').prepend('<li>' + storage.getItem("err_log") + '</li>');
-	
-	var current_gateway = storage.getItem("current_gateway");
-	$("#container_title").html(current_gateway + "容器列表:");
-	
-	var image_list = JSON.parse(storage.getItem("image_list"));		//初始化容器列表
-	for(var i = 0; i < image_list.length; i++) {
-		var image_id = image_list[i] + "_id";
-		var image_checkbox_id = image_list[i] + "_img_checkbox_id";
-		$('#image_frame').prepend('<div id="' + image_id + '" style="display: flex; flex-direction: row;align-items: center"><input type="checkbox" class="checkbox" id="' + image_checkbox_id + '"></input><li>' + image_list[i] + '</li></div>'); 
-	}
-	
-	for(let i = 0; i < container_list.length; i++){
-		var container_name = container_list[i].container_name;
-		var container_id = container_list[i].container_id;
-		var img_id = container_list[i].container_img_id;
-		var name_id = container_list[i].container_name_id;
-		var container_checkbox_id = container_list[i].container_checkbox_id;
-		if(container_list[i].container_status == 'online') {
-			container_class = "container_name_online";
-		}
-		else if(container_list[i].container_status == 'offline') {
-			container_class = "container_name";
-		}
-		// console.log(container_list[i]);
-		$('#container_frame').append('<div class="container_demo" color="" id="' + container_id + '"><img src="../img/container_blue.png" width="200px" height="200px" onclick="skip_two(this)" id="' + img_id + '"/><div class="container_bot"><input type="checkbox" class="checkbox" id="' + container_checkbox_id + '"></input><span class="' + container_class + '" id="' + name_id + '">' + container_name + '</span></div>')
-	}
 }
 
 function container_child_init() {
@@ -169,8 +143,8 @@ function add_container() {
 	var portmapping1 = $("#create_port1").val();
 	var portmapping2 = $("#create_port2").val();
 	var container_id = create_container_name + "_id";
-	var container_img_id = create_container_name + "_img_id";
-	var container_checkbox_id = create_container_name + "_checkbox_id";
+	var container_img_id = create_container_name + "_ctn_img_id";
+	var container_checkbox_id = create_container_name + "_ctn_checkbox_id";
 	var container_name_id = create_container_name + "_name_id";
 	$('#log_frame').prepend('<li>' + storage.getItem("err_log") + '</li>');
 	
@@ -197,17 +171,6 @@ function add_container() {
 	console.log("发送创建" + create_container_name + "容器信息请求！")
 	storage.setItem("containerIsNew", 1);
 	
-	// var rec_ack =  storage.getItem("create_ctn_ack");
-	// if(rec_ack == "success") {
-	// 	console.log("创建容器" + name + "成功！");
-	// 	rec_ack = "fail";
-	// 	storage.setItem("create_ctn_ack", rec_ack);
-	// 	var content_obj = {"container_name":create_container_name, "container_image":create_image_name, "command":create_order, "memory":create_storage_limit, "cpuset":create_cpu_core, "cpushare":create_time_splice, "portmapping1": portmapping1, "portmapping2": portmapping2, "container_id": container_id, "container_img_id": container_img_id, "container_checkbox_id": container_checkbox_id, "container_status": "online", "send_message": [], "received_message": []};
-	// 	container_list.push(content_obj);
-	// 	storage.setItem("container_list", JSON.stringify(container_list));
-	// 	$('#container_frame').append('<div class="container_demo" id="' + container_id + '"><img src="../img/container_blue.png" width="200px" height="200px" onclick="skip_two(this)" id="' + container_img_id + '"/><div class="container_bot"><input type="checkbox" class="checkbox" id="' + container_checkbox_id + '"></input><span class="container_name_online" id="' + container_name_id + '">' + create_container_name + '</span></div>')
-	// }
-	
 	$('#log_frame').empty();
 	$('#log_frame').prepend('<li>' + storage.getItem("err_log") + '</li>');
 }
@@ -220,23 +183,14 @@ function delete_container() {
 		// 判断是否被拒选中，选中返回true，未选中返回false
 		// console.log(box.checked);
 		if(box.checked == true) {
-			var order_obj = {"target":"container", order: "remove", name: container_list[j-1].container_name, "content": ""};
+			var order_obj = {"target":"container", "order": "remove", "name": container_list[j-1].container_name, "content": ""};
 			var message = new Paho.MQTT.Message(JSON.stringify(order_obj));
 			message.destinationName = 'sys/' + storage.getItem('current_gateway') + '/order';
 			message.qos=0;
 			mqtt.send(message);
 			console.log("发送删除" + container_list[j-1].container_name + "容器信息请求！")
-			
-			// var rev_ack = storage.getItem("delete_ctn_ack");
-			// if(rev_ack == "success") {
-			// 	rev_ack = "fail";
-			// 	storage.setItem("delete_ctn_ack", rev_ack);
-			// 	$("#" + container_list[j-1].container_id).remove();
-			// 	container_list.splice(j-1, 1);
-			// }
 		}
 	}
-	// storage.setItem("container_list", JSON.stringify(container_list));
 	$('#log_frame').empty();
 	$('#log_frame').prepend('<li>' + storage.getItem("err_log") + '</li>');
 }
@@ -244,24 +198,17 @@ function delete_container() {
 function stop_container() {
 	container_list = JSON.parse(localStorage.getItem('container_list'));
 	var len = container_list.length;
+	console.log(len);
 	for(var j = len; j > 0; j--){
 		var box=document.getElementById(container_list[j-1].container_checkbox_id);
 		// 判断是否被拒选中，选中返回true，未选中返回false
 		if(box.checked == true) {
-			var order_obj = {"target":"container", order: "stop", name: container_list[j-1].container_name, "content": ""};
+			var order_obj = {"target":"container", "order": "stop", "name": container_list[j-1].container_name, "content": ""};
 			var message = new Paho.MQTT.Message(JSON.stringify(order_obj));
 			message.destinationName = 'sys/' + storage.getItem('current_gateway') + '/order';
 			message.qos=0;
 			mqtt.send(message);
 			console.log("发送停止" + container_list[j-1].container_name + "容器信息请求！")
-			
-			// var rev_ack = storage.getItem("stop_ctn_ack");
-			// if(rev_ack == "success") {
-			// 	rev_ack = "fail";
-			// 	storage.setItem("stop_ctn_ack", rev_ack);
-			// 	container_list[j-1].container_status = "offline";
-			// 	storage.setItem("container_list", JSON.stringify(container_list));
-			// }
 		}
 	}
 	$('#log_frame').empty();
@@ -277,28 +224,20 @@ function start_container() {
 		if(box.checked == true) {
 			var content_obj = {"name":container_list[j-1].container_name, "image":container_list[j-1].image, "command":container_list[j-1].command, "memory":container_list[j-1].memory, "cpuset":container_list[j-1].cpuset, "cpushare":container_list[j-1].cpushare, "portmapping1": container_list[j-1].portmapping1, "portmapping2": container_list[j-1].portmapping2};
 			var content_obj_str = JSON.stringify(content_obj);
-			var order_obj = {"target":"container", order: "run", name: container_list[j-1].container_name, "content": content_obj_str};
+			var order_obj = {"target":"container", "order": "run", "name": container_list[j-1].container_name, "content": content_obj_str};
 			var message = new Paho.MQTT.Message(JSON.stringify(order_obj));
 			message.destinationName = 'sys/' + storage.getItem('current_gateway') + '/order';
 			message.qos=0;
 			mqtt.send(message);
 			console.log("发送开启" + container_list[j-1].container_name + "容器信息请求！")
 			storage.setItem("containerIsNew", 0);
-			
-			// console.log(container_list[j-1].command)
-			// var rev_ack = storage.getItem("stop_ctn_ack");
-			// if(rev_ack == "success") {
-			// 	rev_ack = "fail";
-			// 	storage.setItem("stop_ctn_ack", rev_ack);
-			// 	container_list[j-1].container_status = "offline";
-			// 	storage.setItem("container_list", JSON.stringify(container_list));
-			// }
 		}
 	}
 	$('#log_frame').empty();
 	$('#log_frame').prepend('<li>' + storage.getItem("err_log") + '</li>');
 }
 
+//打包容器
 function package_container() {	
 	container_list = JSON.parse(localStorage.getItem('container_list'));
 	
@@ -309,49 +248,33 @@ function package_container() {
 		if(box.checked == true) {
 			var content_obj = {};
 			var content_obj_str = JSON.stringify(content_obj);
-			var order_obj = {"target":"container", order: "commit", name: container_list[j-1].container_name, "content": content_obj_str};
+			var order_obj = {"target":"container", "order": "commit", "name": container_list[j-1].container_name, "content": content_obj_str};
 			var message = new Paho.MQTT.Message(JSON.stringify(order_obj));
 			message.destinationName = 'sys/' + storage.getItem('current_gateway') + '/order';
 			message.qos=0;
 			mqtt.send(message);
 			console.log("发送打包" + container_list[j-1].container_name + "容器信息请求！")
-			
-			// var rev_ack = storage.getItem("package_ctn_ack");
-			// if(rev_ack == "success") {
-			// 	rev_ack = "fail";
-			// 	storage.setItem("package_ctn_ack", rev_ack);
-			// 	alert("打包成功！");
-			// 	image_list.push("container_list[j-1].container_name");
-			// }
 		}
 	}
-	// storage.setItem("image_list", JSON.stringify(image_list));
 	$('#log_frame').empty();
 	$('#log_frame').prepend('<li>' + storage.getItem("err_log") + '</li>');
 }
 
 function delete_image() {
+	image_list = JSON.parse(storage.getItem("image_list"));
 	var len = image_list.length;
 	for(var j = len; j > 0; j--){
 		var box=document.getElementById(image_list[j-1].image_checkbox_id);
 		// 判断是否被拒选中，选中返回true，未选中返回false
 		if(box.checked == true) {
-			var order_obj = {"target":"image", order: "remove", name: image_list[j-1].image_name, "content": ""};
+			var order_obj = {"target":"image", "order": "remove", "name": image_list[j-1].image_name, "content": ""};
 			var message = new Paho.MQTT.Message(JSON.stringify(order_obj));
 			message.destinationName = 'sys/' + storage.getItem('current_gateway') + '/order';
 			message.qos=0;
 			mqtt.send(message);
-			console.log("发送删除" + image_list[j-1] + "镜像信息请求！")
-			
-			// var rev_ack = storage.getItem("package_ctn_ack");
-			// if(rev_ack == "success") {
-			// 	rev_ack = "fail";
-			// 	$("#" + image_list[j-1] + "_id").remove();
-			// 	image_list.splice(j-1, 1);
-			// }
+			console.log("发送删除" + image_list[j-1].image_name + "镜像信息请求！")
 		}
 	}
-	// localStorage.setItem("image_list", JSON.stringify(image_list));
 	$('#log_frame').empty();
 	$('#log_frame').prepend('<li>' + storage.getItem("err_log") + '</li>');
 }
@@ -374,8 +297,19 @@ function container_clear() {
 function query_log() {
 	var current_container = storage.getItem("current_container");
 	var current_gateway = storage.getItem("current_gateway");
-	var message = storage.getItem("query_log");
-	$('#childreceive').prepend('<li>' + 'Topic: ' + 'sys/' + current_gateway + '/' + current_container + 'msg' + '=====>>>>>' + 'Message: ' + message+ '</li>');
+	var order_obj = {"target":"container", order: "logs", name: current_container, "content": ""};
+	var message = new Paho.MQTT.Message(JSON.stringify(order_obj));
+	message.destinationName = 'sys/' + storage.getItem('current_gateway') + '/order';
+	message.qos=0;
+	mqtt.send(message);
+	console.log("发送查询" + current_container + "日志信息请求！")
+	
+	for(var i = 0; i < container_list.length; i++) {
+		if(current_container == container_list[i].container_name) {
+			container_list[i].received_message.push('sys/' + current_gateway + '/' + current_container + '/msg' + '@' + 'logs');
+		}
+	}
+	$('#childsend').prepend('<li>' + 'Topic: ' + 'sys/' + current_gateway + '/' + current_container + '/msg' + '=====>>>>>' + 'Message: ' + 'logs' + '</li>');
 }
 
 function test_button() {

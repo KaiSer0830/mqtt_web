@@ -68,7 +68,7 @@ function onMessageArrived(message) {		//接收信息函数
 	var message = message.payloadString;
 	var current_gateway = storage.getItem('current_gateway');
 	var current_container = storage.getItem('current_container');
-	image_list = JSON.parse(storage.getItem("image_list"));		//初始化容器列表
+	var image_list = JSON.parse(storage.getItem("image_list"));		//初始化容器列表
 	var arr_topic = topic.split("/");
 	
 	//防止容器为空
@@ -95,7 +95,7 @@ function onMessageArrived(message) {		//接收信息函数
 			var cpushare = temp_info_obj.cpushare;
 			var portmapping1 = temp_info_obj.portmapping1;
 			var portmapping2 = temp_info_obj.portmapping;
-			var content_obj = {"container_name":arr_mes[1], "container_image":container_image, "command":command, "memory":memory, "cpuset":cpuset, "cpushare":cpushare, "portmapping1": portmapping1, "portmapping2": portmapping2, "container_id": arr_mes[1] + "_id", "container_img_id": arr_mes[1] + "_img_id", "container_checkbox_id": arr_mes[1] + "_ctn_checkbox_id","container_name_id": arr_mes[1] + "_name_id", "container_status": "online", "send_message": [], "received_message": []};
+			var content_obj = {"container_name":arr_mes[1], "container_image":container_image, "command":command, "memory":memory, "cpuset":cpuset, "cpushare":cpushare, "portmapping1": portmapping1, "portmapping2": portmapping2, "container_id": arr_mes[1] + "_ctn_id", "container_img_id": arr_mes[1] + "_ctn_img_id", "container_checkbox_id": arr_mes[1] + "_ctn_checkbox_id","container_name_id": arr_mes[1] + "_name_id", "container_status": "online", "send_message": [], "received_message": []};
 			var container_exist_flag = false;
 			for(var i = 0; i < container_list.length; i++) {
 				if(arr_mes[1] == container_list[i].container_name) {
@@ -106,16 +106,15 @@ function onMessageArrived(message) {		//接收信息函数
 				container_list.push(content_obj);
 			}
 			storage.setItem("container_list", JSON.stringify(container_list));
-			$('#container_frame').append('<div class="container_demo" id="' + arr_mes[1] + "_id" + '"><img src="../img/container_blue.png" width="200px" height="200px" onclick="skip_two(this)" id="' + arr_mes[1] + "_img_id" + '"/><div class="container_bot"><input type="checkbox" class="checkbox" id="' + arr_mes[1] + "_checkbox_id" + '"></input><span class="container_name_online" id="' + arr_mes[1] + "_name_id" + '">' + arr_mes[1] + '</span></div>')
+			$('#container_frame').append('<div class="container_demo" id="' + arr_mes[1] + "_id" + '"><img src="../img/container_blue.png" width="200px" height="200px" onclick="skip_two(this)" id="' + arr_mes[1] + "_img_id" + '"/><div class="container_bot"><input type="checkbox" class="checkbox" id="' + arr_mes[1] + "_ctn_checkbox_id" + '"></input><span class="container_name_online" id="' + arr_mes[1] + "_name_id" + '">' + arr_mes[1] + '</span></div>')
 		}
 		
 		//删除容器操作
 		else if(arr_mes[0] == "container" && arr_mes[2] == "remove" && arr_mes[3] == '1'){
 			for(var i = container_list.length; i > 0; i--) {
 				if(arr_mes[1] == container_list[i-1].container_name) {
-					container_list.splice(i-1, 1);
 					$("#" + container_list[i-1].container_id).remove();
-					return;
+					container_list.splice(i-1, 1);
 				}
 			}
 			storage.setItem("container_list", JSON.stringify(container_list));
@@ -127,7 +126,6 @@ function onMessageArrived(message) {		//接收信息函数
 				if(arr_mes[1] == container_list[i-1].container_name) {
 					container_list[i-1].container_status = "offline";
 					$("#" + container_list[i-1].container_name_id).attr("class", "container_name");
-					return;
 				}
 			}
 			storage.setItem("container_list", JSON.stringify(container_list));
@@ -139,7 +137,6 @@ function onMessageArrived(message) {		//接收信息函数
 				if(arr_mes[1] == container_list[i-1].container_name) {
 					container_list[i-1].container_status = "online";
 					$("#" + container_list[i-1].container_name_id).attr("class", "container_name_online");
-					return;
 				}
 			}
 			storage.setItem("container_list", JSON.stringify(container_list));
@@ -147,17 +144,18 @@ function onMessageArrived(message) {		//接收信息函数
 		
 		//打包容器操作
 		else if(arr_mes[0] == "container" && arr_mes[2] == "commit" && arr_mes[3] == '1'){
-			for(var i = container_list.length; i > 0; i--) {
-				if(arr_mes[1] == container_list[i-1].container_name) {
-					image_list.push(arr_mes[1]);
-					for(var i = 0; i < image_list.length; i++) {
-						var image_id = image_list[i] + "_id";
-						var image_checkbox_id = image_list[i] + "_img_checkbox_id";
-						$('#image_frame').prepend('<div id="' + image_id + '" style="display: flex; flex-direction: row;align-items: center"><input type="checkbox" class="checkbox" id="' + image_checkbox_id + '"></input><li>' + image_list[i] + '</li></div>'); 
-					}
-					return;
+			var img_name = arr_mes[i];
+			var img_id = arr_mes[i] + '_img_id';
+			var img_checkbox_id = arr_mes[i] + '_img_checkbox_id';
+			var content_obj = {"image_name":img_name, "image_id":img_id, "image_checkbox_id":img_checkbox_id};
+			for(var i = 0; i < image_list.length; i++) {
+				if(arr[i] == image_list[i].image_name) {
+					image_list.splice(i, 1);
+					$('#' + image_list[i].image_id).remove();
 				}
 			}
+			image_list.push(content_obj);
+			$('#image_frame').prepend('<div id="' + img_id + '" style="display: flex; flex-direction: row;align-items: center"><input type="checkbox" class="checkbox" id="' + img_checkbox_id + '"></input><li>' + img_name + '</li></div>'); 
 			storage.setItem("image_list", JSON.stringify(image_list));
 		}
 		
@@ -167,7 +165,6 @@ function onMessageArrived(message) {		//接收信息函数
 				if(arr_mes[1] == image_list[i-1].image_name) {
 					$("#" + image_list[i-1].image_id).remove();
 					image_list.splice(i-1, 1);
-					return;
 				}
 			}
 			storage.setItem("image_list", JSON.stringify(image_list));
@@ -181,14 +178,16 @@ function onMessageArrived(message) {		//接收信息函数
 	
 	//获取系统镜像列表操作
 	else if(topic == ("sys/" + current_gateway + "/imgls") && message != null) {
+		image_list = new Array();
 		console.log(message);
 		var message_obj = JSON.parse(message);
+		$('#image_frame').empty();
 		for(var i = 0; i < Object.keys(message_obj).length; i++) {
-			var image_id = Object.values(message_obj)[i].name + "_id";
+			var image_id = Object.values(message_obj)[i].name + "_img_id";
 			var image_name = Object.values(message_obj)[i].name;
 			var image_checkbox_id = Object.values(message_obj)[i].name + "_img_checkbox_id";
 			
-			var content_obj = {"image_id":image_id, "image_name":image_name, "image_checkbox_id":image_checkbox_id};
+			var content_obj = {"image_name":image_name, "image_id":image_id, "image_checkbox_id":image_checkbox_id};
 			image_list.push(content_obj);
 			$('#image_frame').prepend('<div id="' + image_id + '" style="display: flex; flex-direction: row;align-items: center"><input type="checkbox" class="checkbox" id="' + image_checkbox_id + '"></input><li>' + image_name + '</li></div>'); 
 		}
@@ -199,6 +198,8 @@ function onMessageArrived(message) {		//接收信息函数
 	else if(topic == ("sys/" + current_gateway + "/ctnls") && message != null) {
 		console.log(message);
 		var message_obj = JSON.parse(message);
+		container_list = new Array();
+		$('#container_frame').empty();
 		if(Object.keys(message_obj).length == 0) {
 			// container_list.splice(0, container_list.length);  //***********************
 			container_list = new Array();
@@ -206,8 +207,8 @@ function onMessageArrived(message) {		//接收信息函数
 		}
 		for(var i = 0; i < Object.keys(message_obj).length; i++) {
 			// console.log(Object.values(message_obj)[i].name);
-			var container_id = Object.values(message_obj)[i].name + "_id";
-			var container_img_id = Object.values(message_obj)[i].name + "_img_id";
+			var container_id = Object.values(message_obj)[i].name + "_ctn_id";
+			var container_img_id = Object.values(message_obj)[i].name + "_ctn_img_id";
 			var container_checkbox_id = Object.values(message_obj)[i].name + "_ctn_checkbox_id";
 			var container_name_id = Object.values(message_obj)[i].name + "_name_id";
 			var create_container_name = Object.values(message_obj)[i].name;
